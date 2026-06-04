@@ -30,6 +30,9 @@ import org.springframework.gradle.ProjectUtils;
  * @author Steve Riesenberg
  */
 public class SpringRepositoryPlugin implements Plugin<Project> {
+
+	private static final String RELEASE_TRAIN_REPOSITORY_ENV_PREFIX = "RELEASE_TRAIN_MAVEN_REPOSITORY";
+
 	@Override
 	public void apply(Project project) {
 		List<String> forceMavenRepositories = Collections.emptyList();
@@ -47,6 +50,10 @@ public class SpringRepositoryPlugin implements Plugin<Project> {
 			project.getRepositories().mavenLocal();
 		}
 		project.getRepositories().mavenCentral();
+		String releaseTrainRepositoryUrl = System.getenv(RELEASE_TRAIN_REPOSITORY_ENV_PREFIX + "_URL");
+		if (releaseTrainRepositoryUrl != null) {
+			configureReleaseTrainRepository(project, releaseTrainRepositoryUrl);
+		}
 		if (isSnapshot) {
 			repository(project, "artifactory-snapshot", "https://repo.spring.io/snapshot/");
 		}
@@ -68,4 +75,18 @@ public class SpringRepositoryPlugin implements Plugin<Project> {
 			repo.setUrl(url);
 		});
 	}
+
+	private void configureReleaseTrainRepository(Project project, String repositoryUrl) {
+		String username = System.getenv(RELEASE_TRAIN_REPOSITORY_ENV_PREFIX + "_USERNAME");
+		String password = System.getenv(RELEASE_TRAIN_REPOSITORY_ENV_PREFIX + "_PASSWORD");
+		project.getRepositories().maven((repo) -> {
+			repo.setUrl(repositoryUrl);
+			repo.setName("Release Train");
+			repo.credentials((credentials) -> {
+				credentials.setUsername(username);
+				credentials.setPassword(password);
+			});
+		});
+	}
+
 }
